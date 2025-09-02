@@ -1,0 +1,13 @@
+Please add your profile picture here with the name "profile.jpg"
+
+The website is currently looking for:
+- images/profile.jpg (your profile picture)
+- images/project1.jpg (e-commerce project screenshot)
+- images/project2.jpg (task management project screenshot)
+- images/project3.jpg (portfolio project screenshot)
+
+Recommended dimensions:
+- Profile picture: 400x400 pixels (square)
+- Project images: 600x400 pixels (landscape)
+
+The website will work without these images (it has fallback styles), but adding them will make it look much better!
