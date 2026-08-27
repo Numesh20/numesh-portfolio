@@ -1,302 +1,348 @@
-// Mobile Menu Toggle
-document.addEventListener('DOMContentLoaded', function() {
+/* ============================================================
+   Numesh Ravindra Portfolio — script.js  (Debugged & Smooth)
+   ============================================================ */
+
+/* ----------------------------------------------------------
+   UTILITY: throttle
+   ---------------------------------------------------------- */
+function throttle(fn, wait) {
+    let last = 0;
+    return function (...args) {
+        const now = Date.now();
+        if (now - last >= wait) { last = now; fn.apply(this, args); }
+    };
+}
+
+/* ----------------------------------------------------------
+   UTILITY: showNotification
+   ---------------------------------------------------------- */
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.setAttribute('role', 'alert');
+    notification.style.cssText = `
+        position:fixed; top:20px; right:20px;
+        background:${type === 'success' ? '#64ffda' : '#ff6b6b'};
+        color:#0f0f23; padding:1rem 1.5rem; border-radius:8px;
+        box-shadow:0 10px 30px rgba(0,0,0,0.3); z-index:10000;
+        font-family:Inter,sans-serif; font-weight:600; font-size:0.95rem;
+        max-width:320px;
+        transform:translateX(420px);
+        transition:transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
+    `;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+        notification.style.transform = 'translateX(0)';
+    }));
+    setTimeout(() => {
+        notification.style.transform = 'translateX(420px)';
+        notification.addEventListener('transitionend', () => notification.remove(), { once: true });
+    }, 3500);
+}
+
+/* ----------------------------------------------------------
+   INJECT DYNAMIC STYLES
+   ---------------------------------------------------------- */
+(function injectStyles() {
+    const style = document.createElement('style');
+    style.textContent = `
+        .nav-link.active { color:#64ffda !important; }
+        .nav-link.active::after { width:100% !important; }
+
+        /* Safe parallax — only moves decorative ::before layer */
+        .hero::before {
+            transform: translateY(var(--parallax-offset, 0px));
+            will-change: transform;
+        }
+
+        /* Scroll-to-top button */
+        #scroll-top-btn {
+            position:fixed; bottom:2rem; right:2rem;
+            width:48px; height:48px;
+            background:#64ffda; color:#0f0f23;
+            border:none; border-radius:50%; font-size:1.1rem;
+            cursor:pointer; z-index:999;
+            display:flex; align-items:center; justify-content:center;
+            opacity:0; transform:translateY(20px) scale(0.8);
+            transition:opacity 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+            pointer-events:none;
+            box-shadow:0 4px 20px rgba(100,255,218,0.4);
+        }
+        #scroll-top-btn.visible { opacity:1; transform:translateY(0) scale(1); pointer-events:all; }
+        #scroll-top-btn:hover { box-shadow:0 8px 30px rgba(100,255,218,0.6); transform:translateY(-3px) scale(1.08); }
+
+        /* CSS-class reveal (preserves hover effects unlike inline styles) */
+        .reveal-ready {
+            opacity:0; transform:translateY(32px);
+            transition:opacity 0.65s cubic-bezier(0.22,1,0.36,1),
+                        transform 0.65s cubic-bezier(0.22,1,0.36,1);
+        }
+        .reveal-ready.revealed { opacity:1; transform:translateY(0); }
+        .reveal-ready:nth-child(2) { transition-delay:0.1s; }
+        .reveal-ready:nth-child(3) { transition-delay:0.2s; }
+        .reveal-ready:nth-child(4) { transition-delay:0.3s; }
+
+        /* Loading overlay */
+        #loading-overlay {
+            position:fixed; inset:0; background:#0f0f23;
+            display:flex; align-items:center; justify-content:center;
+            z-index:99999; transition:opacity 0.6s ease;
+        }
+        #loading-overlay.hidden { opacity:0; pointer-events:none; }
+        #loading-spinner {
+            width:52px; height:52px;
+            border:3px solid rgba(100,255,218,0.2); border-top-color:#64ffda;
+            border-radius:50%; animation:spin 0.9s linear infinite;
+            margin:0 auto 1rem;
+        }
+        #loading-text { color:#64ffda; font-family:Inter,sans-serif; font-size:0.9rem; letter-spacing:0.1em; }
+        @keyframes spin { to { transform:rotate(360deg); } }
+    `;
+    document.head.appendChild(style);
+})();
+
+/* ----------------------------------------------------------
+   LOADING OVERLAY
+   FIX: Hard 3 s safety timeout so CDN failures can't freeze it
+   ---------------------------------------------------------- */
+(function initLoadingOverlay() {
+    const overlay = document.createElement('div');
+    overlay.id = 'loading-overlay';
+    overlay.setAttribute('aria-hidden', 'true');
+    overlay.innerHTML = `
+        <div style="text-align:center">
+            <div id="loading-spinner"></div>
+            <p id="loading-text">Loading…</p>
+        </div>`;
+    document.body.prepend(overlay);
+
+    function hideOverlay() {
+        overlay.classList.add('hidden');
+        overlay.addEventListener('transitionend', () => overlay.remove(), { once: true });
+    }
+    const safetyTimer = setTimeout(hideOverlay, 3000);
+    window.addEventListener('load', () => {
+        clearTimeout(safetyTimer);
+        setTimeout(hideOverlay, 500);
+    }, { once: true });
+})();
+
+/* ----------------------------------------------------------
+   SCROLL-TO-TOP BUTTON
+   ---------------------------------------------------------- */
+(function initScrollTopBtn() {
+    const btn = document.createElement('button');
+    btn.id = 'scroll-top-btn';
+    btn.setAttribute('aria-label', 'Scroll to top');
+    btn.innerHTML = '<i class="fas fa-chevron-up"></i>';
+    document.body.appendChild(btn);
+    btn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+})();
+
+/* ----------------------------------------------------------
+   MAIN DOM-READY BLOCK
+   ---------------------------------------------------------- */
+document.addEventListener('DOMContentLoaded', function () {
+
+    /* ── 1. MOBILE MENU ────────────────────────────────── */
     const mobileMenu = document.getElementById('mobile-menu');
-    const navMenu = document.querySelector('.nav-menu');
+    const navMenu    = document.querySelector('.nav-menu');
 
-    mobileMenu.addEventListener('click', function() {
-        mobileMenu.classList.toggle('active');
-        navMenu.classList.toggle('active');
-    });
-
-    // Close mobile menu when clicking on a link
-    document.querySelectorAll('.nav-link').forEach(link => {
-        link.addEventListener('click', () => {
-            mobileMenu.classList.remove('active');
-            navMenu.classList.remove('active');
+    if (mobileMenu && navMenu) {
+        mobileMenu.addEventListener('click', function () {
+            const isOpen = navMenu.classList.toggle('active');
+            mobileMenu.classList.toggle('active', isOpen);
+            mobileMenu.setAttribute('aria-expanded', String(isOpen));
         });
-    });
 
-    // Smooth scrolling for navigation links
+        navMenu.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', () => {
+                navMenu.classList.remove('active');
+                mobileMenu.classList.remove('active');
+                mobileMenu.setAttribute('aria-expanded', 'false');
+            });
+        });
+
+        // FIX: Close menu on outside click (was missing)
+        document.addEventListener('click', e => {
+            if (navMenu.classList.contains('active') &&
+                !navMenu.contains(e.target) &&
+                !mobileMenu.contains(e.target)) {
+                navMenu.classList.remove('active');
+                mobileMenu.classList.remove('active');
+                mobileMenu.setAttribute('aria-expanded', 'false');
+            }
+        });
+    }
+
+    /* ── 2. SMOOTH SCROLLING ───────────────────────────── */
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         anchor.addEventListener('click', function (e) {
-            e.preventDefault();
-            const target = document.querySelector(this.getAttribute('href'));
+            const href = this.getAttribute('href');
+            if (href === '#') return;
+            const target = document.querySelector(href);
             if (target) {
-                const offset = 80; // Account for fixed navbar
-                const targetPosition = target.offsetTop - offset;
+                e.preventDefault();
                 window.scrollTo({
-                    top: targetPosition,
+                    top: target.getBoundingClientRect().top + window.pageYOffset - 80,
                     behavior: 'smooth'
                 });
             }
         });
     });
 
-    // Navbar background on scroll
-    window.addEventListener('scroll', function() {
-        const navbar = document.querySelector('.navbar');
-        if (window.scrollY > 50) {
-            navbar.style.background = 'rgba(15, 15, 35, 0.98)';
-        } else {
-            navbar.style.background = 'rgba(15, 15, 35, 0.95)';
+    /* ── 3. UNIFIED SCROLL HANDLER (throttled) ──────────
+       FIX: Was 3 separate scroll listeners causing triple
+       repaints per frame. Merged into one at ~60fps.
+       ─────────────────────────────────────────────────── */
+    const navbar    = document.querySelector('.navbar');
+    const hero      = document.querySelector('.hero');
+    const sections  = document.querySelectorAll('section[id]');
+    const navLinks  = document.querySelectorAll('.nav-link');
+    const scrollBtn = document.getElementById('scroll-top-btn');
+
+    window.addEventListener('scroll', throttle(function () {
+        const scrolled = window.pageYOffset;
+
+        // 3a. Navbar opacity
+        if (navbar) {
+            navbar.style.background = scrolled > 50
+                ? 'rgba(15,15,35,0.98)' : 'rgba(15,15,35,0.95)';
         }
-    });
 
-    // Active navigation link highlighting
-    const sections = document.querySelectorAll('section[id]');
-    const navLinks = document.querySelectorAll('.nav-link');
-
-    window.addEventListener('scroll', function() {
+        // 3b. Active nav link
         let current = '';
-        sections.forEach(section => {
-            const sectionTop = section.offsetTop - 100;
-            const sectionHeight = section.clientHeight;
-            if (pageYOffset >= sectionTop && pageYOffset < sectionTop + sectionHeight) {
-                current = section.getAttribute('id');
-            }
+        sections.forEach(s => {
+            if (scrolled >= s.offsetTop - 120) current = s.getAttribute('id');
+        });
+        navLinks.forEach(link => {
+            link.classList.toggle('active', link.getAttribute('href').substring(1) === current);
         });
 
-        navLinks.forEach(link => {
-            link.classList.remove('active');
-            if (link.getAttribute('href').substring(1) === current) {
-                link.classList.add('active');
+        // 3c. Parallax (CSS variable — never moves the section itself)
+        if (hero) hero.style.setProperty('--parallax-offset', `${scrolled * 0.25}px`);
+
+        // 3d. Scroll-to-top visibility
+        if (scrollBtn) scrollBtn.classList.toggle('visible', scrolled > 400);
+
+    }, 16), { passive: true });
+
+    /* ── 4. REVEAL ANIMATIONS (IntersectionObserver) ────
+       FIX: Previously set inline opacity/transform which
+       overrode hover effects after revealing. Now uses
+       CSS classes so hover transitions still work.
+       ─────────────────────────────────────────────────── */
+    const revealEls = document.querySelectorAll(
+        '.service-card, .project-card, .tech-category, .contact-item'
+    );
+    revealEls.forEach(el => el.classList.add('reveal-ready'));
+
+    new IntersectionObserver((entries, obs) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('revealed');
+                obs.unobserve(entry.target);
             }
+        });
+    }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' }).observe(...revealEls.length
+        ? [revealEls[0]] : [document.body]
+    );
+
+    // Re-observe each element
+    if (revealEls.length > 1) {
+        const obs2 = new IntersectionObserver((entries, obs) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) { entry.target.classList.add('revealed'); obs.unobserve(entry.target); }
+            });
+        }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+        revealEls.forEach(el => obs2.observe(el));
+    }
+
+    /* ── 5. TYPING EFFECT ───────────────────────────────
+       FIX: Now waits for CSS fadeInUp to finish (1400ms)
+       before clearing text, prevents blank-title flash.
+       ─────────────────────────────────────────────────── */
+    const heroTitle = document.querySelector('.hero-title');
+    if (heroTitle) {
+        const text = heroTitle.textContent.trim();
+        setTimeout(() => {
+            heroTitle.style.animation = 'none';
+            heroTitle.textContent = '';
+            heroTitle.style.opacity = '1';
+            let i = 0;
+            (function type() {
+                if (i < text.length) { heroTitle.textContent += text.charAt(i++); setTimeout(type, 75); }
+            })();
+        }, 1400);
+    }
+
+    /* ── 6. ANIMATED STATS COUNTER ──────────────────────
+       FIX: hasSuffix captured BEFORE interval, so '+' is
+       never lost mid-animation.
+       ─────────────────────────────────────────────────── */
+    function animateStats() {
+        document.querySelectorAll('.stat-item h3').forEach(stat => {
+            const raw       = stat.textContent.trim();
+            const hasSuffix = raw.includes('+');
+            const target    = parseInt(raw.replace('+', ''), 10);
+            const step      = Math.max(1, target / 60);
+            let count       = 0;
+            const timer = setInterval(() => {
+                count = Math.min(count + step, target);
+                stat.textContent = Math.floor(count) + (hasSuffix ? '+' : '');
+                if (count >= target) clearInterval(timer);
+            }, 30);
+        });
+    }
+
+    const statsSection = document.querySelector('.about-stats');
+    if (statsSection) {
+        new IntersectionObserver((entries, obs) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) { animateStats(); obs.disconnect(); }
+            });
+        }, { threshold: 0.4 }).observe(statsSection);
+    }
+
+    /* ── 7. PROJECT IMAGE FALLBACK ──────────────────────── */
+    document.querySelectorAll('.project-image img').forEach(img => {
+        img.addEventListener('error', function () {
+            this.style.display = 'none';
+            const parent = this.parentElement;
+            parent.style.background = 'linear-gradient(135deg, #0d7377, #14a085, #4ecdc4)';
+            const ph = document.createElement('div');
+            ph.style.cssText = 'display:flex;align-items:center;justify-content:center;height:100%;flex-direction:column;gap:.5rem';
+            ph.innerHTML = `
+                <i class="fas fa-laptop-code" style="font-size:2.5rem;color:#0f0f23;opacity:.7"></i>
+                <span style="color:#0f0f23;font-size:.8rem;opacity:.6;font-family:Inter,sans-serif">Preview unavailable</span>`;
+            parent.appendChild(ph);
         });
     });
 
-    // Contact form handling
+    /* ── 8. CONTACT FORM ─────────────────────────────────── */
     const contactForm = document.getElementById('contact-form');
     if (contactForm) {
-        contactForm.addEventListener('submit', function(e) {
+        contactForm.addEventListener('submit', function (e) {
             e.preventDefault();
-            
-            // Get form data
-            const formData = new FormData(this);
-            const name = formData.get('name');
-            const email = formData.get('email');
-            const subject = formData.get('subject');
-            const message = formData.get('message');
+            const name    = this.name.value.trim();
+            const email   = this.email.value.trim();
+            const subject = this.subject.value.trim();
+            const message = this.message.value.trim();
 
-            // Create mailto link
-            const mailtoLink = `mailto:numeshravindra2003@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(`From: ${name} (${email})\n\nMessage:\n${message}`)}`;
-            
-            // Open email client
-            window.location.href = mailtoLink;
-            
-            // Show success message
-            showNotification('Message prepared! Your email client should open now.', 'success');
-            
-            // Reset form
+            if (!name || !email || !subject || !message) {
+                showNotification('Please fill in all fields.', 'error');
+                return;
+            }
+
+            const body = `From: ${name} (${email})\n\nMessage:\n${message}`;
+            window.location.href = `mailto:numeshravindra2003@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+            showNotification('Your email client should open now!', 'success');
             this.reset();
         });
     }
 
-    // Intersection Observer for animations
-    const observerOptions = {
-        threshold: 0.1,
-        rootMargin: '0px 0px -50px 0px'
-    };
+    /* ── 9. DYNAMIC COPYRIGHT YEAR ───────────────────────── */
+    const yearEl = document.getElementById('copyright-year');
+    if (yearEl) yearEl.textContent = new Date().getFullYear();
 
-    const observer = new IntersectionObserver(function(entries) {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.style.opacity = '1';
-                entry.target.style.transform = 'translateY(0)';
-            }
-        });
-    }, observerOptions);
-
-    // Observe elements for animation
-    document.querySelectorAll('.service-card, .project-card, .tech-category, .contact-item').forEach(el => {
-        el.style.opacity = '0';
-        el.style.transform = 'translateY(30px)';
-        el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
-        observer.observe(el);
-    });
-
-    // Typing effect for hero title
-    // BUG FIX: Previously cleared textContent immediately on DOMContentLoaded,
-    // which conflicted with the CSS fadeInUp animation — the element would be
-    // invisible (opacity:0 from animation start) while the text was being typed,
-    // causing a blank flash. Now we wait for the animation to fully complete
-    // (800ms delay + 600ms animation = ~1400ms) before clearing and retyping.
-    const heroTitle = document.querySelector('.hero-title');
-    if (heroTitle) {
-        const text = heroTitle.textContent.trim();
-
-        setTimeout(() => {
-            heroTitle.textContent = '';
-            heroTitle.style.opacity = '1';
-            // Cancel any lingering CSS animation so it doesn't interfere
-            heroTitle.style.animation = 'none';
-
-            let index = 0;
-            function typeWriter() {
-                if (index < text.length) {
-                    heroTitle.textContent += text.charAt(index);
-                    index++;
-                    setTimeout(typeWriter, 80);
-                }
-            }
-            typeWriter();
-        }, 1400);
-    }
-
-    // Parallax effect for hero background
-    // BUG FIX: Previously applied transform to the entire <section>, which caused
-    // the fixed navbar to be uncovered and content to scroll off-screen.
-    // Now only shifts the ::before pseudo-element background via a CSS variable.
-    window.addEventListener('scroll', function() {
-        const scrolled = window.pageYOffset;
-        const hero = document.querySelector('.hero');
-        if (hero) {
-            const rate = scrolled * 0.3;
-            hero.style.setProperty('--parallax-offset', `${rate}px`);
-        }
-    });
-
-    // Dynamic stats counter
-    function animateStats() {
-        const stats = document.querySelectorAll('.stat-item h3');
-        stats.forEach(stat => {
-            const originalText = stat.textContent.trim();
-            // BUG FIX: Capture whether + exists BEFORE we start overwriting textContent.
-            // Previously, the check (stat.textContent.includes('+')) ran mid-animation
-            // after the content had already been replaced with a plain number, so the
-            // + sign was permanently lost.
-            const hasSuffix = originalText.includes('+');
-            const target = parseInt(originalText.replace('+', ''));
-            let count = 0;
-            const increment = target / 50;
-
-            const timer = setInterval(() => {
-                count += increment;
-                if (count >= target) {
-                    stat.textContent = target + (hasSuffix ? '+' : '');
-                    clearInterval(timer);
-                } else {
-                    stat.textContent = Math.floor(count) + (hasSuffix ? '+' : '');
-                }
-            }, 50);
-        });
-    }
-
-    // Trigger stats animation when section is visible
-    const statsSection = document.querySelector('.about-stats');
-    if (statsSection) {
-        const statsObserver = new IntersectionObserver(function(entries) {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    animateStats();
-                    statsObserver.unobserve(entry.target);
-                }
-            });
-        }, { threshold: 0.5 });
-        
-        statsObserver.observe(statsSection);
-    }
-
-    // Project image fallback
-    document.querySelectorAll('.project-image img').forEach(img => {
-        img.addEventListener('error', function() {
-            this.style.display = 'none';
-            this.parentElement.style.background = 'linear-gradient(135deg, #64ffda, #4ecdc4)';
-            
-            // Create a placeholder
-            const placeholder = document.createElement('div');
-            placeholder.innerHTML = '<i class="fas fa-image" style="font-size: 3rem; color: #0f0f23;"></i>';
-            placeholder.style.display = 'flex';
-            placeholder.style.alignItems = 'center';
-            placeholder.style.justifyContent = 'center';
-            placeholder.style.height = '100%';
-            this.parentElement.appendChild(placeholder);
-        });
-    });
-
-    // Add loading animation
-    const loadingOverlay = document.createElement('div');
-    loadingOverlay.innerHTML = `
-        <div style="display: flex; align-items: center; justify-content: center; height: 100vh; background: #0f0f23; position: fixed; top: 0; left: 0; width: 100%; z-index: 9999;">
-            <div style="text-align: center;">
-                <div style="width: 50px; height: 50px; border: 3px solid rgba(100, 255, 218, 0.3); border-top: 3px solid #64ffda; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 1rem;"></div>
-                <p style="color: #64ffda; font-family: Inter, sans-serif;">Loading...</p>
-            </div>
-        </div>
-        <style>
-            @keyframes spin {
-                0% { transform: rotate(0deg); }
-                100% { transform: rotate(360deg); }
-            }
-        </style>
-    `;
-    
-    document.body.appendChild(loadingOverlay);
-    
-    window.addEventListener('load', function() {
-        setTimeout(() => {
-            loadingOverlay.style.opacity = '0';
-            loadingOverlay.style.transition = 'opacity 0.5s ease';
-            setTimeout(() => {
-                loadingOverlay.remove();
-            }, 500);
-        }, 1000);
-    });
 });
-
-// Utility function for notifications
-function showNotification(message, type = 'info') {
-    const notification = document.createElement('div');
-    notification.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: ${type === 'success' ? '#64ffda' : '#ff6b6b'};
-        color: #0f0f23;
-        padding: 1rem 1.5rem;
-        border-radius: 8px;
-        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-        z-index: 10000;
-        font-family: Inter, sans-serif;
-        font-weight: 500;
-        transform: translateX(400px);
-        transition: transform 0.3s ease;
-    `;
-    notification.textContent = message;
-    
-    document.body.appendChild(notification);
-    
-    setTimeout(() => {
-        notification.style.transform = 'translateX(0)';
-    }, 100);
-    
-    setTimeout(() => {
-        notification.style.transform = 'translateX(400px)';
-        setTimeout(() => {
-            notification.remove();
-        }, 300);
-    }, 3000);
-}
-
-// Add active class style for navigation
-const style = document.createElement('style');
-style.textContent = `
-    .nav-link.active {
-        color: #64ffda !important;
-    }
-    .nav-link.active::after {
-        width: 100% !important;
-    }
-    /* Parallax: move only the decorative ::before layer, not the whole section */
-    .hero::before {
-        transform: translateY(var(--parallax-offset, 0px));
-        transition: transform 0.1s linear;
-    }
-`;
-document.head.appendChild(style);
-
-// Dynamic copyright year
-// BUG FIX: Hardcoded year (2024) would go stale every year.
-const yearEl = document.getElementById('copyright-year');
-if (yearEl) {
-    yearEl.textContent = new Date().getFullYear();
-}
