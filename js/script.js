@@ -160,7 +160,7 @@ document.addEventListener('DOMContentLoaded', function () {
             mobileMenu.setAttribute('aria-expanded', String(isOpen));
         });
 
-        navMenu.querySelectorAll('.nav-link').forEach(link => {
+        navMenu.querySelectorAll('.nav-link, .nav-cv-btn').forEach(link => {
             link.addEventListener('click', () => {
                 navMenu.classList.remove('active');
                 mobileMenu.classList.remove('active');
