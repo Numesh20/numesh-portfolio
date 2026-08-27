@@ -237,26 +237,16 @@ document.addEventListener('DOMContentLoaded', function () {
     );
     revealEls.forEach(el => el.classList.add('reveal-ready'));
 
-    new IntersectionObserver((entries, obs) => {
+    const revealObserver = new IntersectionObserver((entries, obs) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
                 entry.target.classList.add('revealed');
                 obs.unobserve(entry.target);
             }
         });
-    }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' }).observe(...revealEls.length
-        ? [revealEls[0]] : [document.body]
-    );
+    }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
 
-    // Re-observe each element
-    if (revealEls.length > 1) {
-        const obs2 = new IntersectionObserver((entries, obs) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) { entry.target.classList.add('revealed'); obs.unobserve(entry.target); }
-            });
-        }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
-        revealEls.forEach(el => obs2.observe(el));
-    }
+    revealEls.forEach(el => revealObserver.observe(el));
 
     /* ── 5. TYPING EFFECT ───────────────────────────────
        FIX: Now waits for CSS fadeInUp to finish (1400ms)
