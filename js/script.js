@@ -238,7 +238,7 @@ document.addEventListener('DOMContentLoaded', function () {
        CSS classes so hover transitions still work.
        ─────────────────────────────────────────────────── */
     const revealEls = document.querySelectorAll(
-        '.service-card, .project-card, .tech-category, .contact-item, .cert-card'
+        '.service-card, .project-card, .tech-category, .contact-item, .cert-card, .leadership-card'
     );
     revealEls.forEach(el => el.classList.add('reveal-ready'));
 
