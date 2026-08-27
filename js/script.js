@@ -115,49 +115,67 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Typing effect for hero title
+    // BUG FIX: Previously cleared textContent immediately on DOMContentLoaded,
+    // which conflicted with the CSS fadeInUp animation — the element would be
+    // invisible (opacity:0 from animation start) while the text was being typed,
+    // causing a blank flash. Now we wait for the animation to fully complete
+    // (800ms delay + 600ms animation = ~1400ms) before clearing and retyping.
     const heroTitle = document.querySelector('.hero-title');
     if (heroTitle) {
-        const text = heroTitle.textContent;
-        heroTitle.textContent = '';
-        heroTitle.style.opacity = '1';
-        
-        let index = 0;
-        function typeWriter() {
-            if (index < text.length) {
-                heroTitle.textContent += text.charAt(index);
-                index++;
-                setTimeout(typeWriter, 100);
+        const text = heroTitle.textContent.trim();
+
+        setTimeout(() => {
+            heroTitle.textContent = '';
+            heroTitle.style.opacity = '1';
+            // Cancel any lingering CSS animation so it doesn't interfere
+            heroTitle.style.animation = 'none';
+
+            let index = 0;
+            function typeWriter() {
+                if (index < text.length) {
+                    heroTitle.textContent += text.charAt(index);
+                    index++;
+                    setTimeout(typeWriter, 80);
+                }
             }
-        }
-        
-        setTimeout(typeWriter, 1000);
+            typeWriter();
+        }, 1400);
     }
 
     // Parallax effect for hero background
+    // BUG FIX: Previously applied transform to the entire <section>, which caused
+    // the fixed navbar to be uncovered and content to scroll off-screen.
+    // Now only shifts the ::before pseudo-element background via a CSS variable.
     window.addEventListener('scroll', function() {
         const scrolled = window.pageYOffset;
         const hero = document.querySelector('.hero');
         if (hero) {
-            const rate = scrolled * 0.5;
-            hero.style.transform = `translateY(${rate}px)`;
+            const rate = scrolled * 0.3;
+            hero.style.setProperty('--parallax-offset', `${rate}px`);
         }
     });
 
-    // Dynamic stats counter (optional enhancement)
+    // Dynamic stats counter
     function animateStats() {
         const stats = document.querySelectorAll('.stat-item h3');
         stats.forEach(stat => {
-            const target = parseInt(stat.textContent.replace('+', ''));
+            const originalText = stat.textContent.trim();
+            // BUG FIX: Capture whether + exists BEFORE we start overwriting textContent.
+            // Previously, the check (stat.textContent.includes('+')) ran mid-animation
+            // after the content had already been replaced with a plain number, so the
+            // + sign was permanently lost.
+            const hasSuffix = originalText.includes('+');
+            const target = parseInt(originalText.replace('+', ''));
             let count = 0;
             const increment = target / 50;
-            
+
             const timer = setInterval(() => {
                 count += increment;
                 if (count >= target) {
-                    stat.textContent = target + (stat.textContent.includes('+') ? '+' : '');
+                    stat.textContent = target + (hasSuffix ? '+' : '');
                     clearInterval(timer);
                 } else {
-                    stat.textContent = Math.floor(count) + (stat.textContent.includes('+') ? '+' : '');
+                    stat.textContent = Math.floor(count) + (hasSuffix ? '+' : '');
                 }
             }, 50);
         });
@@ -268,5 +286,17 @@ style.textContent = `
     .nav-link.active::after {
         width: 100% !important;
     }
+    /* Parallax: move only the decorative ::before layer, not the whole section */
+    .hero::before {
+        transform: translateY(var(--parallax-offset, 0px));
+        transition: transform 0.1s linear;
+    }
 `;
 document.head.appendChild(style);
+
+// Dynamic copyright year
+// BUG FIX: Hardcoded year (2024) would go stale every year.
+const yearEl = document.getElementById('copyright-year');
+if (yearEl) {
+    yearEl.textContent = new Date().getFullYear();
+}
