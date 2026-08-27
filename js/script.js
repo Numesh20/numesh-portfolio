@@ -314,25 +314,64 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    /* ── 8. CONTACT FORM ─────────────────────────────────── */
+    /* ── 8. CONTACT FORM (Formspree AJAX + Fallback) ────── */
     const contactForm = document.getElementById('contact-form');
     if (contactForm) {
-        contactForm.addEventListener('submit', function (e) {
+        contactForm.addEventListener('submit', async function (e) {
             e.preventDefault();
-            const name    = this.name.value.trim();
-            const email   = this.email.value.trim();
-            const subject = this.subject.value.trim();
-            const message = this.message.value.trim();
+            const form = this;
+            const submitBtn = form.querySelector('#submit-btn') || form.querySelector('button[type="submit"]');
+            const statusEl  = document.getElementById('form-status');
+
+            const name    = form.name.value.trim();
+            const email   = form.email.value.trim();
+            const subject = form.subject.value.trim();
+            const message = form.message.value.trim();
 
             if (!name || !email || !subject || !message) {
-                showNotification('Please fill in all fields.', 'error');
+                showNotification('Please fill in all required fields.', 'error');
                 return;
             }
 
-            const body = `From: ${name} (${email})\n\nMessage:\n${message}`;
-            window.location.href = `mailto:numeshravindra2003@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-            showNotification('Your email client should open now!', 'success');
-            this.reset();
+            const originalBtnHtml = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+
+            if (statusEl) {
+                statusEl.style.display = 'none';
+            }
+
+            try {
+                const formData = new FormData(form);
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: { 'Accept': 'application/json' }
+                });
+
+                if (response.ok) {
+                    showNotification('Message sent successfully! I will reply soon.', 'success');
+                    if (statusEl) {
+                        statusEl.style.display = 'block';
+                        statusEl.style.padding = '0.75rem 1rem';
+                        statusEl.style.background = 'rgba(100, 255, 218, 0.15)';
+                        statusEl.style.color = '#64ffda';
+                        statusEl.style.border = '1px solid rgba(100, 255, 218, 0.3)';
+                        statusEl.innerHTML = '<i class="fas fa-check-circle"></i> Thank you! Your message has been sent successfully.';
+                    }
+                    form.reset();
+                } else {
+                    throw new Error('Formspree returned error response');
+                }
+            } catch (err) {
+                // Fallback to mailto if endpoint is not verified yet or offline
+                const mailtoBody = `From: ${name} (${email})\n\nMessage:\n${message}`;
+                window.location.href = `mailto:numeshravindra2003@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(mailtoBody)}`;
+                showNotification('Opening your email client to send message...', 'info');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnHtml;
+            }
         });
     }
 

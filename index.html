@@ -576,24 +576,27 @@
                     </div>
                 </div>
                 <div class="contact-form">
-                    <form id="contact-form">
+                    <form id="contact-form" action="https://formspree.io/f/xvgkzkqj" method="POST">
                         <div class="form-group">
                             <label for="name">Name</label>
-                            <input type="text" id="name" name="name" required>
+                            <input type="text" id="name" name="name" placeholder="Your full name" required>
                         </div>
                         <div class="form-group">
                             <label for="email">Email</label>
-                            <input type="email" id="email" name="email" required>
+                            <input type="email" id="email" name="email" placeholder="Your email address" required>
                         </div>
                         <div class="form-group">
                             <label for="subject">Subject</label>
-                            <input type="text" id="subject" name="subject" required>
+                            <input type="text" id="subject" name="subject" placeholder="Project inquiry / Internship / General" required>
                         </div>
                         <div class="form-group">
                             <label for="message">Message</label>
-                            <textarea id="message" name="message" rows="5" required></textarea>
+                            <textarea id="message" name="message" rows="5" placeholder="Write your message here..." required></textarea>
                         </div>
-                        <button type="submit" class="btn btn-primary">Send Message</button>
+                        <button type="submit" id="submit-btn" class="btn btn-primary">
+                            <i class="fas fa-paper-plane"></i> Send Message
+                        </button>
+                        <div id="form-status" style="margin-top: 1rem; font-size: 0.9rem; border-radius: 6px; display: none;"></div>
                     </form>
                 </div>
             </div>
@@ -621,6 +624,7 @@
                 </div>
             </div>
         </div>
+    </footer>
     <!-- Floating WhatsApp Button -->
     <a href="https://wa.me/94704574568?text=Hi%20Numesh,%20I%20saw%20your%20portfolio%20and%20would%20like%20to%20connect!" 
        target="_blank" 
