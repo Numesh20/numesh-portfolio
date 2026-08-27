@@ -2,15 +2,16 @@
 
 # 🌐 Numesh Ravindra — Portfolio
 
-### Aspiring Associate Project Manager & Business Analyst
+### Aspiring IT Project Manager & Business Analyst
 
-[![Status](https://img.shields.io/badge/Status-Live-brightgreen?style=for-the-badge)](https://github.com/Numesh20/numesh-portfolio)
+[![Live Site](https://img.shields.io/badge/Live%20Demo-numesh--portfolio.vercel.app-00dfa2?style=for-the-badge&logo=vercel&logoColor=white)](https://numesh-portfolio.vercel.app/)
+[![Status](https://img.shields.io/badge/Status-Live-brightgreen?style=for-the-badge)](https://numesh-portfolio.vercel.app/)
 [![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](LICENSE)
-[![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white)](https://developer.mozilla.org/en-US/docs/Web/HTML)
-[![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white)](https://developer.mozilla.org/en-US/docs/Web/CSS)
-[![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
+[![GitHub](https://img.shields.io/badge/GitHub-Numesh20-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Numesh20)
 
-*A modern, responsive portfolio built with vanilla HTML, CSS & JavaScript — featuring dark theme, smooth animations, and clean UI.*
+*A modern, responsive portfolio showcasing IT Project Management competencies, Agile workflows, real projects, and certifications.*
+
+👉 **[View Live Portfolio](https://numesh-portfolio.vercel.app/)**
 
 </div>
 
