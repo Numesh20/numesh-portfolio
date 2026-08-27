@@ -55,6 +55,11 @@ function showNotification(message, type = 'info') {
             will-change: transform;
         }
 
+        @media (max-width: 768px) {
+            .projects-grid { grid-template-columns: 1fr; }
+            .certs-grid { grid-template-columns: 1fr; }
+        }
+
         /* Scroll-to-top button */
         #scroll-top-btn {
             position:fixed; bottom:2rem; right:2rem;
@@ -233,7 +238,7 @@ document.addEventListener('DOMContentLoaded', function () {
        CSS classes so hover transitions still work.
        ─────────────────────────────────────────────────── */
     const revealEls = document.querySelectorAll(
-        '.service-card, .project-card, .tech-category, .contact-item'
+        '.service-card, .project-card, .tech-category, .contact-item, .cert-card'
     );
     revealEls.forEach(el => el.classList.add('reveal-ready'));
 
