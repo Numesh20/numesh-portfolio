@@ -145,9 +145,32 @@ function showNotification(message, type = 'info') {
 })();
 
 /* ----------------------------------------------------------
+   THEME MANAGER (Dark / Light Mode)
+   Runs immediately to prevent flash of wrong theme
+   ---------------------------------------------------------- */
+(function initThemeEarly() {
+    const savedTheme = localStorage.getItem('nr-theme');
+    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const initialTheme = savedTheme || (prefersDark ? 'dark' : 'dark'); // default dark
+    document.documentElement.setAttribute('data-theme', initialTheme);
+})();
+
+/* ----------------------------------------------------------
    MAIN DOM-READY BLOCK
    ---------------------------------------------------------- */
 document.addEventListener('DOMContentLoaded', function () {
+
+    /* ── 0. THEME TOGGLE ───────────────────────────────── */
+    const themeToggleBtn = document.getElementById('theme-toggle');
+    if (themeToggleBtn) {
+        themeToggleBtn.addEventListener('click', function () {
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('nr-theme', newTheme);
+            showNotification(newTheme === 'dark' ? '🌙 Dark mode enabled' : '☀️ Light mode enabled', 'info');
+        });
+    }
 
     /* ── 1. MOBILE MENU ────────────────────────────────── */
     const mobileMenu = document.getElementById('mobile-menu');
@@ -160,8 +183,11 @@ document.addEventListener('DOMContentLoaded', function () {
             mobileMenu.setAttribute('aria-expanded', String(isOpen));
         });
 
-        navMenu.querySelectorAll('.nav-link, .nav-cv-btn').forEach(link => {
-            link.addEventListener('click', () => {
+        navMenu.querySelectorAll('.nav-link, .nav-cv-btn, .theme-toggle-btn').forEach(link => {
+            link.addEventListener('click', (e) => {
+                if (e.target.closest('#theme-toggle')) {
+                    // let theme toggle execute its handler
+                }
                 navMenu.classList.remove('active');
                 mobileMenu.classList.remove('active');
                 mobileMenu.setAttribute('aria-expanded', 'false');
